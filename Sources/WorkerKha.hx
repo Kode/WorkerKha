@@ -1,18 +1,15 @@
 package;
 
 import js.html.Worker;
+import kha.Assets;
 import kha.Blob;
 import kha.Color;
 import kha.Framebuffer;
-import kha.Game;
 import kha.Image;
 import kha.input.Keyboard;
-import kha.Key;
-import kha.Loader;
-import kha.math.Matrix3;
-import kha.Music;
+import kha.input.KeyCode;
+import kha.math.FastMatrix3;
 import kha.Sound;
-import kha.Starter;
 
 class Frame {
 	public var commands: Array<Dynamic>;
@@ -22,7 +19,7 @@ class Frame {
 	}
 }
 
-class WorkerKha extends Game {
+class WorkerKha {
 	private var worker: Worker;
 	private var frames: Array<Frame>;
 	private var currentFrame: Frame;
@@ -30,22 +27,16 @@ class WorkerKha extends Game {
 	private var lastImageId: Int;
 	
 	public function new() {
-		super("WorkerKha", false);
 		frames = [];
 		currentFrame = new Frame();
 		images = new Map();
 		lastImageId = 0;
 		Keyboard.get().notify(keyboardDown, keyboardUp);
-	}
-	
-	override public function loadFinished(): Void {
-		super.loadFinished();
 		worker = new Worker('kha.js');
 		worker.addEventListener('message', onMessage, false);
 	}
 	
-	override public function render(frame: Framebuffer): Void {
-		super.render(frame);
+	public function render(frame: Framebuffer): Void {
 		if (frames.length > 0) {
 			var g = frame.g2;
 			g.begin();
@@ -60,7 +51,7 @@ class WorkerKha extends Game {
 					g.color = Color.White;
 					g.drawScaledSubImage(images[command.id], command.sx, command.sy, command.sw, command.sh, command.dx, command.dy, command.dw, command.dh);
 				case 'setTransformation':
-					g.transformation = new Matrix3([command._0, command._1, command._2, command._3, command._4, command._5, command._6, command._7, command._8]);
+					g.transformation = new FastMatrix3(command._0, command._1, command._2, command._3, command._4, command._5, command._6, command._7, command._8);
 				case 'end':
 					break;
 				}
@@ -72,36 +63,30 @@ class WorkerKha extends Game {
 		worker.postMessage( { command: 'frame' } );
 	}
 	
-	private function keyboardDown(key: Key, char: String): Void {
-		super.keyDown(key, char);
-		worker.postMessage( { command: 'keyDown', key: key.getIndex(), char: char } );
+	private function keyboardDown(key: KeyCode): Void {
+		worker.postMessage( { command: 'keyDown', key: key } );
 	}
 	
-	private function keyboardUp(key: Key, char: String): Void {
-		super.keyUp(key, char);
-		worker.postMessage( { command: 'keyUp', key: key.getIndex(), char: char } );
+	private function keyboardUp(key: KeyCode): Void {
+		worker.postMessage( { command: 'keyUp', key: key } );
 	}
 	
 	private function onMessage(message: Dynamic): Void {
 		var data = message.data;
 		switch (data.command) {
 		case 'loadBlob':
-			Loader.the.loadBlob( { name: data.name, file: data.file }, function(blob: Blob): Void {
+			Assets.loadBlobFromPath(data.file, function (blob: Blob) {
 				worker.postMessage( { command: 'loadedBlob', file: data.file, data: blob.bytes.getData() } );
 			});
 		case 'loadImage':
-			Loader.the.loadImage( { name: data.name, file: data.file }, function(image: Image): Void {
+			Assets.loadImageFromPath(data.file, false, function (image: Image) {
 				++lastImageId;
 				images.set(lastImageId, image);
 				worker.postMessage( { command: 'loadedImage', file: data.file, id: lastImageId, width: image.width, height: image.height, realWidth: image.realWidth, realHeight: image.realHeight } );
 			});
 		case 'loadSound':
-			Loader.the.loadSound( { name: data.name, file: data.file }, function(sound: Sound): Void {
+			Assets.loadSoundFromPath(data.file, function (sound: Sound) {
 				worker.postMessage( { command: 'loadedSound', file: data.file } );
-			});
-		case 'loadMusic':
-			Loader.the.loadMusic( { name: data.name, file: data.file }, function(music: Music): Void {
-				worker.postMessage( { command: 'loadedMusic', file: data.file } );
 			});
 		case 'drawImage':
 			currentFrame.commands.push( { command: 'drawImage', id: data.id, x: data.x, y: data.y } );

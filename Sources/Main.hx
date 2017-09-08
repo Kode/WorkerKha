@@ -1,10 +1,12 @@
 package;
 
-import kha.Starter;
+import kha.System;
 
 class Main {
 	public static function main() {
-		var starter = new Starter();
-		starter.start(new WorkerKha());
+		System.init({title: "WorkerKha", width: 640, height: 480}, function () {
+			var worker = new WorkerKha();
+			System.notifyOnRender(worker.render);
+		});
 	}
 }
