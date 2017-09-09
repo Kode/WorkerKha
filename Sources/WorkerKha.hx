@@ -6,9 +6,11 @@ import kha.Blob;
 import kha.Color;
 import kha.Framebuffer;
 import kha.Image;
+import kha.graphics4.ConstantLocation;
 import kha.graphics4.FragmentShader;
 import kha.graphics4.IndexBuffer;
 import kha.graphics4.PipelineState;
+import kha.graphics4.TextureUnit;
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.VertexData;
 import kha.graphics4.VertexElement;
@@ -39,6 +41,8 @@ class WorkerKha {
 	var pipelines: Map<Int, PipelineState>;
 	var indexBuffers: Map<Int, IndexBuffer>;
 	var vertexBuffers: Map<Int, VertexBuffer>;
+	var constantLocations: Map<Int, ConstantLocation>;
+	var textureUnits: Map<Int, TextureUnit>;
 	
 	public function new() {
 		frames = [];
@@ -48,6 +52,8 @@ class WorkerKha {
 		pipelines = new Map();
 		indexBuffers = new Map();
 		vertexBuffers = new Map();
+		constantLocations = new Map();
+		textureUnits = new Map();
 		lastImageId = 0;
 		Keyboard.get().notify(keyboardDown, keyboardUp);
 		worker = new Worker('khaworker.js');
@@ -93,6 +99,14 @@ class WorkerKha {
 						g.setIndexBuffer(indexBuffers[command.id]);
 					case 'setVertexBuffer':
 						g.setVertexBuffer(vertexBuffers[command.id]);
+					case 'createConstantLocation':
+						constantLocations[command.id] = pipelines[command.pipeline].getConstantLocation(command.name);
+					case 'createTextureUnit':
+						textureUnits[command.id] = pipelines[command.pipeline].getTextureUnit(command.name);
+					case 'setTexture':
+						g.setTexture(textureUnits[command.stage], images[command.texture]);
+					case 'setMatrix3':
+						g.setMatrix3(constantLocations[command.location], new FastMatrix3(command._00, command._10, command._20, command._01, command._11, command._21, command._02, command._12, command._22));
 					case 'drawIndexedVertices':
 						g.drawIndexedVertices(command.start, command.count);
 					case 'end':
@@ -122,9 +136,8 @@ class WorkerKha {
 			});
 		case 'loadImage':
 			Assets.loadImageFromPath(data.file, false, function (image: Image) {
-				++lastImageId;
-				images.set(lastImageId, image);
-				worker.postMessage( { command: 'loadedImage', file: data.file, id: lastImageId, width: image.width, height: image.height, realWidth: image.realWidth, realHeight: image.realHeight } );
+				images.set(data.id, image);
+				worker.postMessage( { command: 'loadedImage', id: data.id, width: image.width, height: image.height, realWidth: image.realWidth, realHeight: image.realHeight } );
 			});
 		case 'loadSound':
 			Assets.loadSoundFromPath(data.file, function (sound: Sound) {
@@ -178,7 +191,8 @@ class WorkerKha {
 				structure.elements.push(newelement);
 			}
 			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, kha.graphics4.Usage.StaticUsage);
-		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices':
+		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
+			'createConstantLocation', 'createTextureUnit', 'setMatrix3', 'setTexture':
 			currentFrame.commands.push(data);
 		case 'beginFrame':
 
