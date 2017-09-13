@@ -44,6 +44,7 @@ class WorkerKha {
 	var vertexBuffers: Map<Int, VertexBuffer>;
 	var constantLocations: Map<Int, ConstantLocation>;
 	var textureUnits: Map<Int, TextureUnit>;
+	var workerDir: String;
 	
 	public function new() {
 		instance = this;
@@ -92,6 +93,7 @@ class WorkerKha {
 		frames = [];
 		lastImageId = 0;
 
+		workerDir = workerPath.substring(0, workerPath.lastIndexOf("/") + 1);
 		worker = new Worker(workerPath);
 		worker.addEventListener('message', onMessage, false);
 	}
@@ -173,20 +175,20 @@ class WorkerKha {
 		var data = message.data;
 		switch (data.command) {
 		case 'loadBlob':
-			Assets.loadBlobFromPath(data.file, function (blob: Blob) {
+			Assets.loadBlobFromPath(workerDir + data.file, function (blob: Blob) {
 				if (worker != null) {
 					worker.postMessage( { command: 'loadedBlob', file: data.file, data: blob.bytes.getData() } );
 				}
 			});
 		case 'loadImage':
-			Assets.loadImageFromPath(data.file, false, function (image: Image) {
+			Assets.loadImageFromPath(workerDir + data.file, false, function (image: Image) {
 				images.set(data.id, image);
 				if (worker != null) {
 					worker.postMessage( { command: 'loadedImage', id: data.id, width: image.width, height: image.height, realWidth: image.realWidth, realHeight: image.realHeight } );
 				}
 			});
 		case 'loadSound':
-			Assets.loadSoundFromPath(data.file, function (sound: Sound) {
+			Assets.loadSoundFromPath(workerDir + data.file, function (sound: Sound) {
 				if (worker != null) {
 					worker.postMessage( { command: 'loadedSound', file: data.file } );
 				}
