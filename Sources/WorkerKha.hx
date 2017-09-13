@@ -12,7 +12,6 @@ import kha.graphics4.IndexBuffer;
 import kha.graphics4.PipelineState;
 import kha.graphics4.TextureUnit;
 import kha.graphics4.VertexBuffer;
-import kha.graphics4.VertexData;
 import kha.graphics4.VertexElement;
 import kha.graphics4.VertexShader;
 import kha.graphics4.VertexStructure;
@@ -31,11 +30,13 @@ class Frame {
 	}
 }
 
+@:expose
 class WorkerKha {
+	public static var instance: WorkerKha;
 	private var worker: Worker;
 	private var frames: Array<Frame>;
 	private var currentFrame: Frame;
-	private var images: Map<Int, Dynamic>;
+	private var images: Map<Int, Image>;
 	private var lastImageId: Int;
 	var shaders: Map<String, Dynamic>;
 	var pipelines: Map<Int, PipelineState>;
@@ -45,6 +46,7 @@ class WorkerKha {
 	var textureUnits: Map<Int, TextureUnit>;
 	
 	public function new() {
+		instance = this;
 		frames = [];
 		currentFrame = new Frame();
 		images = new Map();
@@ -56,7 +58,41 @@ class WorkerKha {
 		textureUnits = new Map();
 		lastImageId = 0;
 		Keyboard.get().notify(keyboardDown, keyboardUp);
-		worker = new Worker('khaworker.js');
+		//worker = new Worker('khaworker.js');
+		//worker.addEventListener('message', onMessage, false);
+		worker = null;
+	}
+
+	public function load(workerPath: String): Void {
+		if (worker != null) {
+			worker.terminate();
+		}
+
+		for (image in images) {
+			image.unload();
+		}
+		for (pipeline in pipelines) {
+			pipeline.delete();
+		}
+		for (buffer in indexBuffers) {
+			buffer.delete();
+		}
+		for (buffer in vertexBuffers) {
+			buffer.delete();
+		}
+
+		images = new Map();
+		shaders = new Map();
+		pipelines = new Map();
+		indexBuffers = new Map();
+		vertexBuffers = new Map();
+		constantLocations = new Map();
+		textureUnits = new Map();
+
+		frames = [];
+		lastImageId = 0;
+
+		worker = new Worker(workerPath);
 		worker.addEventListener('message', onMessage, false);
 	}
 	
@@ -116,15 +152,21 @@ class WorkerKha {
 			}
 			frames = [];
 		}
-		worker.postMessage( { command: 'frame' } );
+		if (worker != null) {
+			worker.postMessage( { command: 'frame' } );
+		}
 	}
 	
 	private function keyboardDown(key: KeyCode): Void {
-		worker.postMessage( { command: 'keyDown', key: key } );
+		if (worker != null) {
+			worker.postMessage( { command: 'keyDown', key: key } );
+		}
 	}
 	
 	private function keyboardUp(key: KeyCode): Void {
-		worker.postMessage( { command: 'keyUp', key: key } );
+		if (worker != null) {
+			worker.postMessage( { command: 'keyUp', key: key } );
+		}
 	}
 	
 	private function onMessage(message: Dynamic): Void {
@@ -132,16 +174,22 @@ class WorkerKha {
 		switch (data.command) {
 		case 'loadBlob':
 			Assets.loadBlobFromPath(data.file, function (blob: Blob) {
-				worker.postMessage( { command: 'loadedBlob', file: data.file, data: blob.bytes.getData() } );
+				if (worker != null) {
+					worker.postMessage( { command: 'loadedBlob', file: data.file, data: blob.bytes.getData() } );
+				}
 			});
 		case 'loadImage':
 			Assets.loadImageFromPath(data.file, false, function (image: Image) {
 				images.set(data.id, image);
-				worker.postMessage( { command: 'loadedImage', id: data.id, width: image.width, height: image.height, realWidth: image.realWidth, realHeight: image.realHeight } );
+				if (worker != null) {
+					worker.postMessage( { command: 'loadedImage', id: data.id, width: image.width, height: image.height, realWidth: image.realWidth, realHeight: image.realHeight } );
+				}
 			});
 		case 'loadSound':
 			Assets.loadSoundFromPath(data.file, function (sound: Sound) {
-				worker.postMessage( { command: 'loadedSound', file: data.file } );
+				if (worker != null) {
+					worker.postMessage( { command: 'loadedSound', file: data.file } );
+				}
 			});
 		/*case 'drawImage':
 			currentFrame.commands.push( { command: 'drawImage', id: data.id, x: data.x, y: data.y } );
