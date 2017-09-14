@@ -32,9 +32,13 @@ enum ParseMode {
 }
 
 class Parser {
-	static var classes: Map<String, Klass> = new Map();
+	var classes: Map<String, Klass> = new Map();
 
-	public static function parse(infile: String) {
+	public function new() {
+
+	}
+
+	public function parse(infile: String) {
 		var types = 0;
 		var mode: ParseMode = ParseRegular;
 		var currentClass: Klass = null;
@@ -49,7 +53,7 @@ class Parser {
 					if (line.endsWith(".prototype = {") || line.indexOf(".prototype = $extend(") >= 0) { // parse methods
 						mode = ParseMethods;
 					}
-					else if (line.indexOf(" = function(") >= 0 && line.indexOf("var ") >= 0) {
+					else if (line.indexOf(" = function(") >= 0 && line.indexOf("var ") < 0) {
 						var first = 0;
 						var last = line.indexOf(".");
 						var internal_name = line.substr(first, last - first);
@@ -75,7 +79,7 @@ class Parser {
 								}
 							}
 
-							//printf("Found method %s.\n", methodname.c_str());
+							trace("Found method " + methodname + ".");
 							currentClass.methods[methodname] = currentFunction;
 						}
 						else {
@@ -95,7 +99,7 @@ class Parser {
 						last = line.indexOf(' ', first + 1);
 						var internal_name = line.substr(first + 1, last - first - 1);
 						if (!classes.exists(internal_name)) {
-							//printf("Found type %s.\n", internal_name.c_str());
+							trace("Found type " + internal_name + ".");
 							currentClass = new Klass();
 							currentClass.name = name;
 							currentClass.internal_name = internal_name;
@@ -133,7 +137,7 @@ class Parser {
 								}
 							}
 						
-							//printf("Found method %s.\n", methodname.c_str());
+							//trace("Found method " + methodname + ".");
 							currentClass.methods[methodname] = currentFunction;
 						}
 						else {
@@ -175,7 +179,7 @@ class Parser {
 							script += "\");";
 							
 							// Kore::log(Kore::Info, "Script:\n%s\n", script.c_str());
-							//sendLogMessage("Patching method %s in class %s.", currentFunction->name.c_str(), currentClass->name.c_str());
+							trace("Patching method " + currentFunction.name + " in class " + currentClass.name + ".");
 							
 							//**
 						}
@@ -210,7 +214,7 @@ class Parser {
 							script += "\");";
 
 							// Kore::log(Kore::Info, "Script:\n%s\n", script.c_str());
-							//sendLogMessage("Patching function %s in class %s.", currentFunction->name.c_str(), currentClass->name.c_str());
+							trace("Patching function " + currentFunction.name + " in class " + currentClass.name + ".");
 
 							//**
 						}
@@ -219,6 +223,6 @@ class Parser {
 				}
 			}
 		}
-		//sendLogMessage("%i new types found.", types);
+		trace(types + " new types found.");
 	}
 }

@@ -45,7 +45,8 @@ class WorkerKha {
 	var constantLocations: Map<Int, ConstantLocation>;
 	var textureUnits: Map<Int, TextureUnit>;
 	var workerDir: String;
-	
+	var parser: Parser;
+
 	public function new() {
 		instance = this;
 		frames = [];
@@ -64,38 +65,66 @@ class WorkerKha {
 		worker = null;
 	}
 
+	function loadText(path: String, callback: String->Void): Void {
+		var request = untyped new js.html.XMLHttpRequest();
+		request.open("GET", path, true);
+		request.responseType = "text";
+		
+		request.onreadystatechange = function() {
+			if (request.readyState != 4) return;
+			if (request.status >= 200 && request.status < 400) {
+				callback(request.response);
+			}
+			else {
+				trace("Error loading " + path);
+			}
+		};
+		request.send(null);
+	}
+
 	public function load(workerPath: String): Void {
-		if (worker != null) {
-			worker.terminate();
-		}
+		loadText(workerPath, function (source: String) {
+			parser = new Parser();
+			parser.parse(source);
 
-		for (image in images) {
-			image.unload();
-		}
-		for (pipeline in pipelines) {
-			pipeline.delete();
-		}
-		for (buffer in indexBuffers) {
-			buffer.delete();
-		}
-		for (buffer in vertexBuffers) {
-			buffer.delete();
-		}
+			if (worker != null) {
+				worker.terminate();
+			}
 
-		images = new Map();
-		shaders = new Map();
-		pipelines = new Map();
-		indexBuffers = new Map();
-		vertexBuffers = new Map();
-		constantLocations = new Map();
-		textureUnits = new Map();
+			for (image in images) {
+				image.unload();
+			}
+			for (pipeline in pipelines) {
+				pipeline.delete();
+			}
+			for (buffer in indexBuffers) {
+				buffer.delete();
+			}
+			for (buffer in vertexBuffers) {
+				buffer.delete();
+			}
 
-		frames = [];
-		lastImageId = 0;
+			images = new Map();
+			shaders = new Map();
+			pipelines = new Map();
+			indexBuffers = new Map();
+			vertexBuffers = new Map();
+			constantLocations = new Map();
+			textureUnits = new Map();
 
-		workerDir = workerPath.substring(0, workerPath.lastIndexOf("/") + 1);
-		worker = new Worker(workerPath);
-		worker.addEventListener('message', onMessage, false);
+			frames = [];
+			lastImageId = 0;
+
+			workerDir = workerPath.substring(0, workerPath.lastIndexOf("/") + 1);
+			worker = new Worker(workerPath);
+			worker.addEventListener('message', onMessage, false);
+		});
+	}
+
+	public function inject(workerPath: String): Void {
+		loadText(workerPath, function (source: String) {
+			parser.parse(source);
+		});
 	}
 	
 	public function render(framebuffer: Framebuffer): Void {
