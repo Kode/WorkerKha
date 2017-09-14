@@ -85,7 +85,7 @@ class WorkerKha {
 	public function load(workerPath: String): Void {
 		loadText(workerPath, function (source: String) {
 			parser = new Parser();
-			parser.parse(source);
+			parser.parse(source, null);
 
 			if (worker != null) {
 				worker.terminate();
@@ -123,7 +123,7 @@ class WorkerKha {
 
 	public function inject(workerPath: String): Void {
 		loadText(workerPath, function (source: String) {
-			parser.parse(source);
+			parser.parse(source, worker);
 		});
 	}
 	

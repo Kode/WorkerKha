@@ -38,7 +38,7 @@ class Parser {
 
 	}
 
-	public function parse(infile: String) {
+	public function parse(infile: String, worker: js.html.Worker) {
 		var types = 0;
 		var mode: ParseMode = ParseRegular;
 		var currentClass: Klass = null;
@@ -181,7 +181,9 @@ class Parser {
 							// Kore::log(Kore::Info, "Script:\n%s\n", script.c_str());
 							trace("Patching method " + currentFunction.name + " in class " + currentClass.name + ".");
 							
-							//**
+							if (worker != null) {
+								worker.postMessage( { command: 'patch', source: script } );
+							}
 						}
 						mode = ParseMethods;
 					}
@@ -216,7 +218,9 @@ class Parser {
 							// Kore::log(Kore::Info, "Script:\n%s\n", script.c_str());
 							trace("Patching function " + currentFunction.name + " in class " + currentClass.name + ".");
 
-							//**
+							if (worker != null) {
+								worker.postMessage( { command: 'patch', source: script } );
+							}
 						}
 						mode = ParseRegular;
 					}
