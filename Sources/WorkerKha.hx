@@ -18,6 +18,10 @@ import kha.graphics4.VertexStructure;
 import kha.input.Keyboard;
 import kha.input.KeyCode;
 import kha.math.FastMatrix3;
+import kha.math.FastMatrix4;
+import kha.math.FastVector2;
+import kha.math.FastVector3;
+import kha.math.FastVector4;
 import kha.Sound;
 
 using StringTools;
@@ -174,6 +178,30 @@ class WorkerKha {
 						g.setTexture(textureUnits[command.stage], images[command.texture]);
 					case 'setMatrix3':
 						g.setMatrix3(constantLocations[command.location], new FastMatrix3(command._00, command._10, command._20, command._01, command._11, command._21, command._02, command._12, command._22));
+					case 'setMatrix4':
+						g.setMatrix(constantLocations[command.location], new FastMatrix4(command._00, command._10, command._20, command._30,
+							command._01, command._11, command._21, command._31, command._02, command._12, command._22, command._32,
+							command._03, command._13, command._23, command._33));
+					case 'setVector2':
+						g.setVector2(constantLocations[command.location], new FastVector2(command.x, command.y));
+					case 'setVector3':
+						g.setVector3(constantLocations[command.location], new FastVector3(command.x, command.y, command.z));
+					case 'setVector4':
+						g.setVector4(constantLocations[command.location], new FastVector4(command.x, command.y, command.z, command.w));
+					case 'setFloats':
+						g.setFloats(constantLocations[command.location], command.values);
+					case 'setFloat':
+						g.setFloat(constantLocations[command.location], command.value);
+					case 'setFloat2':
+						g.setFloat2(constantLocations[command.location], command._0, command._1);
+					case 'setFloat3':
+						g.setFloat3(constantLocations[command.location], command._0, command._1, command._2);
+					case 'setFloat4':
+						g.setFloat4(constantLocations[command.location], command._0, command._1, command._2, command._3);
+					case 'setInt':
+						g.setInt(constantLocations[command.location], command.value);
+					case 'setBool':
+						g.setBool(constantLocations[command.location], command.value);
 					case 'drawIndexedVertices':
 						g.drawIndexedVertices(command.start, command.count);
 					case 'end':
