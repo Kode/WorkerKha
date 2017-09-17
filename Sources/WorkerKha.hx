@@ -299,7 +299,8 @@ class WorkerKha {
 			}
 			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, kha.graphics4.Usage.StaticUsage);
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
-			'createConstantLocation', 'createTextureUnit', 'setMatrix3', 'setTexture':
+			'createConstantLocation', 'createTextureUnit', 'setTexture',
+			'setMatrix3', 'setMatrix4', 'setVector2', 'setVector3', 'setVector4', 'setFloats', 'setFloat', 'setFloat2', 'setFloat3', 'setFloat4', 'setInt', 'setBool':
 			currentFrame.commands.push(data);
 		case 'beginFrame':
 
