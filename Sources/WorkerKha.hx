@@ -234,7 +234,7 @@ class WorkerKha {
 		case 'loadBlob':
 			Assets.loadBlobFromPath(workerDir + data.file, function (blob: Blob) {
 				if (worker != null) {
-					worker.postMessage( { command: 'loadedBlob', file: data.file, data: blob.bytes.getData() } );
+					worker.postMessage( { command: 'loadedBlob', id: data.id, data: blob.bytes.getData() } );
 				}
 			});
 		case 'loadImage':
@@ -247,7 +247,7 @@ class WorkerKha {
 		case 'loadSound':
 			Assets.loadSoundFromPath(workerDir + data.file, function (sound: Sound) {
 				if (worker != null) {
-					worker.postMessage( { command: 'loadedSound', file: data.file } );
+					worker.postMessage( { command: 'loadedSound', id: data.id, file: data.file } );
 				}
 			});
 		/*case 'drawImage':
