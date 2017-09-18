@@ -17,6 +17,7 @@ import kha.graphics4.VertexShader;
 import kha.graphics4.VertexStructure;
 import kha.input.Keyboard;
 import kha.input.KeyCode;
+import kha.input.Mouse;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
 import kha.math.FastVector2;
@@ -63,9 +64,8 @@ class WorkerKha {
 		constantLocations = new Map();
 		textureUnits = new Map();
 		lastImageId = 0;
-		Keyboard.get().notify(keyboardDown, keyboardUp);
-		//worker = new Worker('khaworker.js');
-		//worker.addEventListener('message', onMessage, false);
+		Keyboard.get().notify(keyDown, keyUp, keyPress);
+		Mouse.get().notify(mouseDown, mouseUp, mouseMove, mouseWheel);
 		worker = null;
 	}
 
@@ -138,14 +138,6 @@ class WorkerKha {
 				var commands = frame.commands;
 				for (command in commands) {
 					switch (command.command) {
-					/*case 'drawImage':
-						g.color = Color.White;
-						g.drawImage(images[command.id], command.x, command.y);
-					case 'drawScaledSubImage':
-						g.color = Color.White;
-						g.drawScaledSubImage(images[command.id], command.sx, command.sy, command.sw, command.sh, command.dx, command.dy, command.dw, command.dh);
-					case 'setTransformation':
-						g.transformation = new FastMatrix3(command._0, command._1, command._2, command._3, command._4, command._5, command._6, command._7, command._8);*/
 					case 'begin':
 						g.begin();
 					case 'clear':
@@ -216,19 +208,49 @@ class WorkerKha {
 		}
 	}
 	
-	private function keyboardDown(key: KeyCode): Void {
+	function keyDown(key: KeyCode): Void {
 		if (worker != null) {
-			worker.postMessage( { command: 'keyDown', key: key } );
+			worker.postMessage({ command: 'keyDown', key: key });
 		}
 	}
 	
-	private function keyboardUp(key: KeyCode): Void {
+	function keyUp(key: KeyCode): Void {
 		if (worker != null) {
-			worker.postMessage( { command: 'keyUp', key: key } );
+			worker.postMessage({ command: 'keyUp', key: key });
+		}
+	}
+
+	function keyPress(character: String): Void {
+		if (worker != null) {
+			worker.postMessage({ command: 'keyPress', character: character });
+		}
+	}
+
+	function mouseDown(button: Int, x: Int, y: Int): Void {
+		if (worker != null) {
+			worker.postMessage({ command: 'mouseDown', button: button, x: x, y: y });
+		}
+	}
+
+	function mouseUp(button: Int, x: Int, y: Int): Void {
+		if (worker != null) {
+			worker.postMessage({ command: 'mouseUp', button: button, x: x, y: y });
+		}
+	}
+
+	function mouseMove(x: Int, y: Int, mx: Int, my: Int): Void {
+		if (worker != null) {
+			worker.postMessage({ command: 'mouseMove', x: x, y: y, mx: mx, my: my });
+		}
+	}
+
+	function mouseWheel(delta: Int): Void {
+		if (worker != null) {
+			worker.postMessage({ command: 'mouseWheel', delta: delta });
 		}
 	}
 	
-	private function onMessage(message: Dynamic): Void {
+	function onMessage(message: Dynamic): Void {
 		var data = message.data;
 		switch (data.command) {
 		case 'loadBlob':
