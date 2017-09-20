@@ -308,6 +308,26 @@ class WorkerKha {
 				}
 				pipe.inputLayout.push(newstructure);
 			}
+			var state = data.state;
+			pipe.cullMode = state.cullMode;
+			pipe.depthWrite = state.depthWrite;
+			pipe.depthMode = state.depthMode;
+			pipe.stencilMode = state.stencilMode;
+			pipe.stencilBothPass = state.stencilBothPass;
+			pipe.stencilDepthFail = state.stencilDepthFail;
+			pipe.stencilFail = state.stencilFail;
+			pipe.stencilReferenceValue = state.stencilReferenceValue;
+			pipe.stencilReadMask = state.stencilReadMask;
+			pipe.stencilWriteMask = state.stencilWriteMask;
+			pipe.blendSource = state.blendSource;
+			pipe.blendDestination = state.blendDestination;
+			pipe.alphaBlendSource = state.alphaBlendSource;
+			pipe.alphaBlendDestination = state.alphaBlendDestination;
+			pipe.colorWriteMaskRed = state.colorWriteMaskRed;
+			pipe.colorWriteMaskGreen = state.colorWriteMaskGreen;
+			pipe.colorWriteMaskBlue = state.colorWriteMaskBlue;
+			pipe.colorWriteMaskAlpha = state.colorWriteMaskAlpha;
+			pipe.conservativeRasterization = state.conservativeRasterization;
 			pipe.compile();
 			pipelines[data.id] = pipe;
 		case 'createIndexBuffer':
