@@ -6,10 +6,14 @@ import kha.Blob;
 import kha.Color;
 import kha.Framebuffer;
 import kha.Image;
+import kha.graphics4.BlendingFactor;
+import kha.graphics4.CompareMode;
 import kha.graphics4.ConstantLocation;
+import kha.graphics4.CullMode;
 import kha.graphics4.FragmentShader;
 import kha.graphics4.IndexBuffer;
 import kha.graphics4.PipelineState;
+import kha.graphics4.StencilAction;
 import kha.graphics4.TextureUnit;
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.VertexElement;
@@ -167,7 +171,12 @@ class WorkerKha {
 					case 'createTextureUnit':
 						textureUnits[command.id] = pipelines[command.pipeline].getTextureUnit(command.name);
 					case 'setTexture':
-						g.setTexture(textureUnits[command.stage], images[command.texture]);
+						if (command.texture < 0) {
+							g.setTexture(textureUnits[command.stage], null);
+						}
+						else {
+							g.setTexture(textureUnits[command.stage], images[command.texture]);
+						}
 					case 'setMatrix3':
 						g.setMatrix3(constantLocations[command.location], new FastMatrix3(command._00, command._10, command._20, command._01, command._11, command._21, command._02, command._12, command._22));
 					case 'setMatrix4':
@@ -309,20 +318,20 @@ class WorkerKha {
 				pipe.inputLayout.push(newstructure);
 			}
 			var state = data.state;
-			pipe.cullMode = state.cullMode;
+			pipe.cullMode = CullMode.createByIndex(state.cullMode);
 			pipe.depthWrite = state.depthWrite;
-			pipe.depthMode = state.depthMode;
-			pipe.stencilMode = state.stencilMode;
-			pipe.stencilBothPass = state.stencilBothPass;
-			pipe.stencilDepthFail = state.stencilDepthFail;
-			pipe.stencilFail = state.stencilFail;
+			pipe.depthMode = CompareMode.createByIndex(state.depthMode);
+			pipe.stencilMode = CompareMode.createByIndex(state.stencilMode);
+			pipe.stencilBothPass = StencilAction.createByIndex(state.stencilBothPass);
+			pipe.stencilDepthFail = StencilAction.createByIndex(state.stencilDepthFail);
+			pipe.stencilFail = StencilAction.createByIndex(state.stencilFail);
 			pipe.stencilReferenceValue = state.stencilReferenceValue;
 			pipe.stencilReadMask = state.stencilReadMask;
 			pipe.stencilWriteMask = state.stencilWriteMask;
-			pipe.blendSource = state.blendSource;
-			pipe.blendDestination = state.blendDestination;
-			pipe.alphaBlendSource = state.alphaBlendSource;
-			pipe.alphaBlendDestination = state.alphaBlendDestination;
+			pipe.blendSource = BlendingFactor.createByIndex(state.blendSource);
+			pipe.blendDestination = BlendingFactor.createByIndex(state.blendDestination);
+			pipe.alphaBlendSource = BlendingFactor.createByIndex(state.alphaBlendSource);
+			pipe.alphaBlendDestination = BlendingFactor.createByIndex(state.alphaBlendDestination);
 			pipe.colorWriteMaskRed = state.colorWriteMaskRed;
 			pipe.colorWriteMaskGreen = state.colorWriteMaskGreen;
 			pipe.colorWriteMaskBlue = state.colorWriteMaskBlue;
