@@ -145,7 +145,7 @@ class WorkerKha {
 					case 'begin':
 						g.begin();
 					case 'clear':
-						g.clear(command.color == null ? null : Color.fromValue(command.color));
+						g.clear(command.color == null ? null : Color.fromValue(command.color), command.hasDepth ? command.depth : null, command.hasStencil ? command.stencil : null);
 					case 'setPipeline':
 						g.setPipeline(pipelines[command.id]);
 					case 'updateIndexBuffer':
