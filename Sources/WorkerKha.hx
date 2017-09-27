@@ -53,6 +53,7 @@ class WorkerKha {
 	var vertexBuffers: Map<Int, VertexBuffer>;
 	var constantLocations: Map<Int, ConstantLocation>;
 	var textureUnits: Map<Int, TextureUnit>;
+	var renderTargets: Map<Int, Image>;
 	var workerDir: String;
 	var parser: Parser;
 
@@ -67,6 +68,7 @@ class WorkerKha {
 		vertexBuffers = new Map();
 		constantLocations = new Map();
 		textureUnits = new Map();
+		renderTargets = new Map();
 		lastImageId = 0;
 		Keyboard.get().notify(keyDown, keyUp, keyPress);
 		Mouse.get().notify(mouseDown, mouseUp, mouseMove, mouseWheel);
@@ -111,6 +113,9 @@ class WorkerKha {
 			for (buffer in vertexBuffers) {
 				buffer.delete();
 			}
+			for (image in renderTargets) {
+				image.unload();
+			}
 
 			images = new Map();
 			shaders = new Map();
@@ -119,6 +124,7 @@ class WorkerKha {
 			vertexBuffers = new Map();
 			constantLocations = new Map();
 			textureUnits = new Map();
+			renderTargets = new Map();
 
 			frames = [];
 			lastImageId = 0;
@@ -143,6 +149,12 @@ class WorkerKha {
 				for (command in commands) {
 					switch (command.command) {
 					case 'begin':
+						if (command.renderTarget < 0) {
+							g = framebuffer.g4;
+						}
+						else {
+							g = renderTargets[command.renderTarget].g4;
+						}
 						g.begin();
 					case 'clear':
 						g.clear(command.color == null ? null : Color.fromValue(command.color), command.hasDepth ? command.depth : null, command.hasStencil ? command.stencil : null);
@@ -171,8 +183,11 @@ class WorkerKha {
 					case 'createTextureUnit':
 						textureUnits[command.id] = pipelines[command.pipeline].getTextureUnit(command.name);
 					case 'setTexture':
-						if (command.texture < 0) {
+						if (command.texture < 0 && command.renderTarget < 0) {
 							g.setTexture(textureUnits[command.stage], null);
+						}
+						else if (command.texture < 0) {
+							g.setTexture(textureUnits[command.stage], renderTargets[command.renderTarget]);
 						}
 						else {
 							g.setTexture(textureUnits[command.stage], images[command.texture]);
@@ -281,15 +296,6 @@ class WorkerKha {
 					worker.postMessage( { command: 'loadedSound', id: data.id, file: data.file } );
 				}
 			});
-		/*case 'drawImage':
-			currentFrame.commands.push( { command: 'drawImage', id: data.id, x: data.x, y: data.y } );
-		case 'drawScaledSubImage':
-			currentFrame.commands.push( { command: 'drawScaledSubImage', id: data.id, sx: data.sx, sy: data.sy, sw: data.sw, sh: data.sh, dx: data.dx, dy: data.dy, dw: data.dw, dh: data.dh } );
-		case 'setTransformation':
-			currentFrame.commands.push( { command: 'setTransformation', _0: data._0, _1: data._1, _2: data._2, _3: data._3, _4: data._4, _5: data._5, _6: data._6, _7: data._7, _8: data._8 } );
-		case 'end':
-			frames.push(currentFrame);
-			currentFrame = new Frame();*/
 		case 'setShaders':
 			var shaders: Array<Dynamic> = data.shaders;
 			for (shader in shaders) {
@@ -349,6 +355,8 @@ class WorkerKha {
 				structure.elements.push(newelement);
 			}
 			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, kha.graphics4.Usage.StaticUsage);
+		case 'createRenderTarget':
+			renderTargets[data.id] = Image.createRenderTarget(data.width, data.height);
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
 			'createConstantLocation', 'createTextureUnit', 'setTexture',
 			'setMatrix3', 'setMatrix4', 'setVector2', 'setVector3', 'setVector4', 'setFloats', 'setFloat', 'setFloat2', 'setFloat3', 'setFloat4', 'setInt', 'setBool':
