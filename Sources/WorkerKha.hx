@@ -2,6 +2,7 @@ package;
 
 import js.html.Worker;
 import kha.Assets;
+import kha.audio1.Audio;
 import kha.Blob;
 import kha.Color;
 import kha.Framebuffer;
@@ -42,11 +43,11 @@ class Frame {
 @:expose
 class WorkerKha {
 	public static var instance: WorkerKha;
-	private var worker: Worker;
-	private var frames: Array<Frame>;
-	private var currentFrame: Frame;
-	private var images: Map<Int, Image>;
-	private var lastImageId: Int;
+	var worker: Worker;
+	var frames: Array<Frame>;
+	var currentFrame: Frame;
+	var images: Map<Int, Image>;
+	var lastImageId: Int;
 	var shaders: Map<String, Dynamic>;
 	var pipelines: Map<Int, PipelineState>;
 	var indexBuffers: Map<Int, IndexBuffer>;
@@ -54,6 +55,7 @@ class WorkerKha {
 	var constantLocations: Map<Int, ConstantLocation>;
 	var textureUnits: Map<Int, TextureUnit>;
 	var renderTargets: Map<Int, Image>;
+	var sounds: Map<Int, Sound>;
 	var workerDir: String;
 	var parser: Parser;
 
@@ -69,6 +71,7 @@ class WorkerKha {
 		constantLocations = new Map();
 		textureUnits = new Map();
 		renderTargets = new Map();
+		sounds = new Map();
 		lastImageId = 0;
 		Keyboard.get().notify(keyDown, keyUp, keyPress);
 		Mouse.get().notify(mouseDown, mouseUp, mouseMove, mouseWheel);
@@ -116,6 +119,9 @@ class WorkerKha {
 			for (image in renderTargets) {
 				image.unload();
 			}
+			for (sound in sounds) {
+				sound.unload();
+			}
 
 			images = new Map();
 			shaders = new Map();
@@ -125,6 +131,7 @@ class WorkerKha {
 			constantLocations = new Map();
 			textureUnits = new Map();
 			renderTargets = new Map();
+			sounds = new Map();
 
 			frames = [];
 			lastImageId = 0;
@@ -292,10 +299,21 @@ class WorkerKha {
 			});
 		case 'loadSound':
 			Assets.loadSoundFromPath(workerDir + data.file, function (sound: Sound) {
+				sounds.set(data.id, sound);
 				if (worker != null) {
 					worker.postMessage( { command: 'loadedSound', id: data.id, file: data.file } );
 				}
 			});
+		case 'uncompressSound':
+			sounds[data.id].uncompress(function () {
+				if (worker != null) {
+					worker.postMessage({ command: 'uncompressedSound', id: data.id });
+				}
+			});
+		case 'playSound':
+			Audio.play(sounds[data.id], data.loop);
+		case 'streamSound':
+			Audio.stream(sounds[data.id], data.loop);
 		case 'setShaders':
 			var shaders: Array<Dynamic> = data.shaders;
 			for (shader in shaders) {
