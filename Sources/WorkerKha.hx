@@ -29,6 +29,7 @@ import kha.math.FastVector2;
 import kha.math.FastVector3;
 import kha.math.FastVector4;
 import kha.Sound;
+import kha.System;
 
 using StringTools;
 
