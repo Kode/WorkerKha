@@ -372,7 +372,7 @@ class WorkerKha {
 			pipe.compile();
 			pipelines[data.id] = pipe;
 		case 'createIndexBuffer':
-			indexBuffers[data.id] = new IndexBuffer(data.size, kha.graphics4.Usage.StaticUsage);
+			indexBuffers[data.id] = new IndexBuffer(data.size, kha.graphics4.Usage.createByIndex(data.usage));
 		case 'createVertexBuffer':
 			var structure = new VertexStructure();
 			var elements: Array<Dynamic> = data.structure.elements;
@@ -380,7 +380,7 @@ class WorkerKha {
 				var newelement = new VertexElement(element.name, VertexData.createByIndex(element.data));
 				structure.elements.push(newelement);
 			}
-			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, kha.graphics4.Usage.StaticUsage);
+			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, kha.graphics4.Usage.createByIndex(data.usage));
 		case 'createRenderTarget':
 			renderTargets[data.id] = Image.createRenderTarget(data.width, data.height);
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
