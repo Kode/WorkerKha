@@ -170,16 +170,14 @@ class WorkerKha {
 					case 'updateIndexBuffer':
 						var indexBuffer = indexBuffers[command.id];
 						var data = indexBuffer.lock();
-						for (i in 0...data.length) {
-							data.set(i, command.data[i]);
-						}
+						data.data().set(command.data);
 						indexBuffer.unlock();
 					case 'updateVertexBuffer':
 						var vertexBuffer = vertexBuffers[command.id];
-						var data = vertexBuffer.lock();
-						for (i in 0...data.length) {
-							data.set(i, command.data[i]);
-						}
+						var start: Int = command.start;
+						var count: Int = command.count;
+						var data = vertexBuffer.lock(start, count);
+						data.data().set(command.data);
 						vertexBuffer.unlock();
 					case 'setIndexBuffer':
 						g.setIndexBuffer(indexBuffers[command.id]);
