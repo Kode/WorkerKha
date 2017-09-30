@@ -29,6 +29,7 @@ import kha.math.FastVector2;
 import kha.math.FastVector3;
 import kha.math.FastVector4;
 import kha.Sound;
+import kha.System;
 
 using StringTools;
 
@@ -58,6 +59,8 @@ class WorkerKha {
 	var sounds: Map<Int, Sound>;
 	var workerDir: String;
 	var parser: Parser;
+	var width: Int;
+	var height: Int;
 
 	public function new() {
 		instance = this;
@@ -149,6 +152,13 @@ class WorkerKha {
 	}
 	
 	public function render(framebuffer: Framebuffer): Void {
+		if (System.windowWidth() != width || System.windowHeight() != height) {
+			width = System.windowWidth();
+			height = System.windowHeight();
+			if (worker != null) {
+				worker.postMessage({ command: 'setWindowSize', width: width, height: height });
+			}
+		}
 		if (frames.length > 0) {
 			var g = framebuffer.g4;
 			for (frame in frames) {
