@@ -189,6 +189,11 @@ class WorkerKha {
 						var data = vertexBuffer.lock(start, count);
 						data.data().set(command.data);
 						vertexBuffer.unlock();
+					case 'unlockImage':
+						var image = images[command.id];
+						var bytes = image.lock();
+						new js.html.Uint8Array(bytes.getData()).set(new js.html.Uint8Array(command.bytes));
+						image.unlock();
 					case 'setIndexBuffer':
 						g.setIndexBuffer(indexBuffers[command.id]);
 					case 'setVertexBuffer':
@@ -381,10 +386,12 @@ class WorkerKha {
 				structure.elements.push(newelement);
 			}
 			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, kha.graphics4.Usage.createByIndex(data.usage));
+		case 'createImage':
+			images[data.id] = Image.create(data.width, data.height, kha.graphics4.TextureFormat.createByIndex(data.format), kha.graphics4.Usage.createByIndex(data.usage));
 		case 'createRenderTarget':
 			renderTargets[data.id] = Image.createRenderTarget(data.width, data.height);
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
-			'createConstantLocation', 'createTextureUnit', 'setTexture',
+			'createConstantLocation', 'createTextureUnit', 'setTexture', 'unlockImage',
 			'setMatrix3', 'setMatrix4', 'setVector2', 'setVector3', 'setVector4', 'setFloats', 'setFloat', 'setFloat2', 'setFloat3', 'setFloat4', 'setInt', 'setBool':
 			currentFrame.commands.push(data);
 		case 'beginFrame':
