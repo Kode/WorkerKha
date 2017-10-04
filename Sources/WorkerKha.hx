@@ -13,8 +13,11 @@ import kha.graphics4.ConstantLocation;
 import kha.graphics4.CullMode;
 import kha.graphics4.FragmentShader;
 import kha.graphics4.IndexBuffer;
+import kha.graphics4.MipMapFilter;
 import kha.graphics4.PipelineState;
 import kha.graphics4.StencilAction;
+import kha.graphics4.TextureAddressing;
+import kha.graphics4.TextureFilter;
 import kha.graphics4.TextureUnit;
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.VertexElement;
@@ -212,6 +215,9 @@ class WorkerKha {
 						else {
 							g.setTexture(textureUnits[command.stage], images[command.texture]);
 						}
+					case 'setTextureParameters':
+						g.setTextureParameters(textureUnits[command.id], TextureAddressing.createByIndex(command.uAddressing), TextureAddressing.createByIndex(command.vAddressing),
+							TextureFilter.createByIndex(command.minificationFilter), TextureFilter.createByIndex(command.magnificationFilter), MipMapFilter.createByIndex(command.mipmapFilter));
 					case 'setMatrix3':
 						g.setMatrix3(constantLocations[command.location], new FastMatrix3(command._00, command._10, command._20, command._01, command._11, command._21, command._02, command._12, command._22));
 					case 'setMatrix4':
@@ -391,7 +397,7 @@ class WorkerKha {
 		case 'createRenderTarget':
 			renderTargets[data.id] = Image.createRenderTarget(data.width, data.height);
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
-			'createConstantLocation', 'createTextureUnit', 'setTexture', 'unlockImage',
+			'createConstantLocation', 'createTextureUnit', 'setTexture', 'unlockImage', 'setTextureParameters',
 			'setMatrix3', 'setMatrix4', 'setVector2', 'setVector3', 'setVector4', 'setFloats', 'setFloat', 'setFloat2', 'setFloat3', 'setFloat4', 'setInt', 'setBool':
 			currentFrame.commands.push(data);
 		case 'beginFrame':
