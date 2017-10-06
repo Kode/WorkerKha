@@ -54,6 +54,8 @@ class WorkerKha {
 	var lastImageId: Int;
 	var shaders: Map<String, Dynamic>;
 	var pipelines: Map<Int, PipelineState>;
+	var pipelinesByVertexShader: Map<String, PipelineState>;
+	var pipelinesByFragmentShader: Map<String, PipelineState>;
 	var indexBuffers: Map<Int, IndexBuffer>;
 	var vertexBuffers: Map<Int, VertexBuffer>;
 	var constantLocations: Map<Int, ConstantLocation>;
@@ -72,6 +74,8 @@ class WorkerKha {
 		images = new Map();
 		shaders = new Map();
 		pipelines = new Map();
+		pipelinesByVertexShader = new Map();
+		pipelinesByVertexShader = new Map();
 		indexBuffers = new Map();
 		vertexBuffers = new Map();
 		constantLocations = new Map();
@@ -132,6 +136,8 @@ class WorkerKha {
 			images = new Map();
 			shaders = new Map();
 			pipelines = new Map();
+			pipelinesByVertexShader = new Map();
+			pipelinesByVertexShader = new Map();
 			indexBuffers = new Map();
 			vertexBuffers = new Map();
 			constantLocations = new Map();
@@ -152,6 +158,26 @@ class WorkerKha {
 		loadText(workerPath, function (source: String) {
 			parser.parse(source, worker);
 		});
+	}
+
+	public function injectShader(shaderPath: String): Void {
+		loadText(shaderPath, function (source: String) {
+			var localPath = shaderPath.substr(shaderPath.lastIndexOf("/") + 1);
+			if (shaderPath.endsWith(".frag.glsl")) {
+				var shader = FragmentShader.fromSource(source);
+				var pipeline = pipelinesByFragmentShader[localPath];
+				this.shaders[localPath] = shader;
+				pipeline.fragmentShader = shader;
+				pipeline.compile(); // works in webgl but don't do it for portable code
+			}
+			else if (shaderPath.endsWith(".vert.glsl")) {
+				var shader = VertexShader.fromSource(source);
+				var pipeline = pipelinesByFragmentShader[localPath];
+				this.shaders[localPath] = shader;
+				pipeline.vertexShader = shader;
+				pipeline.compile(); // works in webgl but don't do it for portable code
+			}
+		}
 	}
 	
 	public function render(framebuffer: Framebuffer): Void {
