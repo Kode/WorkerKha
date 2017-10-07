@@ -75,7 +75,7 @@ class WorkerKha {
 		shaders = new Map();
 		pipelines = new Map();
 		pipelinesByVertexShader = new Map();
-		pipelinesByVertexShader = new Map();
+		pipelinesByFragmentShader = new Map();
 		indexBuffers = new Map();
 		vertexBuffers = new Map();
 		constantLocations = new Map();
@@ -137,7 +137,7 @@ class WorkerKha {
 			shaders = new Map();
 			pipelines = new Map();
 			pipelinesByVertexShader = new Map();
-			pipelinesByVertexShader = new Map();
+			pipelinesByFragmentShader = new Map();
 			indexBuffers = new Map();
 			vertexBuffers = new Map();
 			constantLocations = new Map();
@@ -177,7 +177,7 @@ class WorkerKha {
 				pipeline.vertexShader = shader;
 				pipeline.compile(); // works in webgl but don't do it for portable code
 			}
-		}
+		});
 	}
 	
 	public function render(framebuffer: Framebuffer): Void {
