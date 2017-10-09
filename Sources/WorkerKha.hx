@@ -144,6 +144,8 @@ class WorkerKha {
 			textureUnits = new Map();
 			renderTargets = new Map();
 			sounds = new Map();
+			width = -1;
+			height = -1;
 
 			frames = [];
 			lastImageId = 0;
