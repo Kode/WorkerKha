@@ -162,22 +162,51 @@ class WorkerKha {
 		});
 	}
 
-	public function injectShader(shaderPath: String): Void {
-		loadText(shaderPath, function (source: String) {
-			var localPath = shaderPath.substr(shaderPath.lastIndexOf("/") + 1);
-			if (shaderPath.endsWith(".frag.glsl")) {
-				var shader = FragmentShader.fromSource(source);
-				var pipeline = pipelinesByFragmentShader[localPath];
-				this.shaders[localPath] = shader;
-				pipeline.fragmentShader = shader;
-				pipeline.compile(); // works in webgl but don't do it for portable code
+	function transformShaderName(name: String, type: String): String {
+		if (kha.SystemImpl.gl2) {
+			return name + "-webgl2." + type + ".essl";
+		}
+		else {
+			var highp = kha.SystemImpl.gl.getShaderPrecisionFormat(js.html.webgl.GL.FRAGMENT_SHADER, js.html.webgl.GL.HIGH_FLOAT);
+			var highpSupported = highp.precision != 0;
+			if (!highpSupported) {
+				return name + "-relaxed." + type + ".essl";
 			}
-			else if (shaderPath.endsWith(".vert.glsl")) {
-				var shader = VertexShader.fromSource(source);
-				var pipeline = pipelinesByFragmentShader[localPath];
+			else {
+				return name + "." + type + ".essl";
+			}
+		}
+	}
+
+	public function injectShader(shaderPath: String): Void {
+		var localPath = shaderPath.substr(shaderPath.lastIndexOf("/") + 1);
+		localPath = localPath.substr(0, localPath.length - 4) + "essl";
+
+		if (shaderPath.endsWith(".frag.glsl")) {
+			shaderPath = transformShaderName(shaderPath.substr(0, shaderPath.length - 10), "frag");
+		}
+		else {
+			shaderPath = transformShaderName(shaderPath.substr(0, shaderPath.length - 10), "vert");
+		}
+
+		loadText(shaderPath, function (source: String) {
+			if (shaderPath.endsWith(".frag.essl")) {
+				var shader = FragmentShader.fromSource(source);
 				this.shaders[localPath] = shader;
-				pipeline.vertexShader = shader;
-				pipeline.compile(); // works in webgl but don't do it for portable code
+				var pipeline = pipelinesByFragmentShader[localPath];
+				if (pipeline != null) {
+					pipeline.fragmentShader = shader;
+					pipeline.compile(); // works in webgl but don't do it for portable code
+				}
+			}
+			else if (shaderPath.endsWith(".vert.essl")) {
+				var shader = VertexShader.fromSource(source);
+				this.shaders[localPath] = shader;
+				var pipeline = pipelinesByVertexShader[localPath];
+				if (pipeline != null) {
+					pipeline.vertexShader = shader;
+					pipeline.compile(); // works in webgl but don't do it for portable code
+				}
 			}
 		});
 	}
@@ -375,12 +404,13 @@ class WorkerKha {
 		case 'compilePipeline':
 			var pipe = new PipelineState();
 			pipe.fragmentShader = shaders[data.frag];
+			pipelinesByFragmentShader[pipe.fragmentShader.files[0]] = pipe;
 			pipe.vertexShader = shaders[data.vert];
+			pipelinesByVertexShader[pipe.vertexShader.files[0]] = pipe;
 			pipe.inputLayout = [];
 			var layout: Array<Dynamic> = data.layout;
 			for (structure in layout) {
 				var newstructure = new VertexStructure();
-				//newstructure.elements
 				var elements: Array<Dynamic> = structure.elements;
 				for (element in elements) {
 					var newelement = new VertexElement(element.name, VertexData.createByIndex(element.data));
