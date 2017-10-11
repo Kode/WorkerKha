@@ -53,9 +53,9 @@ class WorkerKha {
 	var images: Map<Int, Image>;
 	var lastImageId: Int;
 	var shaders: Map<String, Dynamic>;
-	var pipelines: Map<Int, PipelineState>;
-	var pipelinesByVertexShader: Map<String, PipelineState>;
-	var pipelinesByFragmentShader: Map<String, PipelineState>;
+	var pipelines: Map<Int, Pipeline>;
+	var pipelinesByVertexShader: Map<String, Pipeline>;
+	var pipelinesByFragmentShader: Map<String, Pipeline>;
 	var indexBuffers: Map<Int, IndexBuffer>;
 	var vertexBuffers: Map<Int, VertexBuffer>;
 	var constantLocations: Map<Int, ConstantLocation>;
@@ -118,7 +118,7 @@ class WorkerKha {
 				image.unload();
 			}
 			for (pipeline in pipelines) {
-				pipeline.delete();
+				pipeline.state.delete();
 			}
 			for (buffer in indexBuffers) {
 				buffer.delete();
@@ -195,8 +195,9 @@ class WorkerKha {
 				this.shaders[localPath] = shader;
 				var pipeline = pipelinesByFragmentShader[localPath];
 				if (pipeline != null) {
-					pipeline.fragmentShader = shader;
-					pipeline.compile(); // works in webgl but don't do it for portable code
+					pipeline.state.fragmentShader = shader;
+					pipeline.state.compile(); // works in webgl but don't do it for portable code
+					pipeline.update();
 				}
 			}
 			else if (shaderPath.endsWith(".vert.essl")) {
@@ -204,8 +205,9 @@ class WorkerKha {
 				this.shaders[localPath] = shader;
 				var pipeline = pipelinesByVertexShader[localPath];
 				if (pipeline != null) {
-					pipeline.vertexShader = shader;
-					pipeline.compile(); // works in webgl but don't do it for portable code
+					pipeline.state.vertexShader = shader;
+					pipeline.state.compile(); // works in webgl but don't do it for portable code
+					pipeline.update();
 				}
 			}
 		});
@@ -236,7 +238,7 @@ class WorkerKha {
 					case 'clear':
 						g.clear(command.color == null ? null : Color.fromValue(command.color), command.hasDepth ? command.depth : null, command.hasStencil ? command.stencil : null);
 					case 'setPipeline':
-						g.setPipeline(pipelines[command.id]);
+						g.setPipeline(pipelines[command.id].state);
 					case 'updateIndexBuffer':
 						var indexBuffer = indexBuffers[command.id];
 						var data = indexBuffer.lock();
@@ -402,12 +404,12 @@ class WorkerKha {
 				}
 			}
 		case 'compilePipeline':
-			var pipe = new PipelineState();
-			pipe.fragmentShader = shaders[data.frag];
-			pipelinesByFragmentShader[pipe.fragmentShader.files[0]] = pipe;
-			pipe.vertexShader = shaders[data.vert];
-			pipelinesByVertexShader[pipe.vertexShader.files[0]] = pipe;
-			pipe.inputLayout = [];
+			var pipe = new Pipeline();
+			pipe.state.fragmentShader = shaders[data.frag];
+			pipelinesByFragmentShader[pipe.state.fragmentShader.files[0]] = pipe;
+			pipe.state.vertexShader = shaders[data.vert];
+			pipelinesByVertexShader[pipe.state.vertexShader.files[0]] = pipe;
+			pipe.state.inputLayout = [];
 			var layout: Array<Dynamic> = data.layout;
 			for (structure in layout) {
 				var newstructure = new VertexStructure();
@@ -416,29 +418,29 @@ class WorkerKha {
 					var newelement = new VertexElement(element.name, VertexData.createByIndex(element.data));
 					newstructure.elements.push(newelement);
 				}
-				pipe.inputLayout.push(newstructure);
+				pipe.state.inputLayout.push(newstructure);
 			}
 			var state = data.state;
-			pipe.cullMode = CullMode.createByIndex(state.cullMode);
-			pipe.depthWrite = state.depthWrite;
-			pipe.depthMode = CompareMode.createByIndex(state.depthMode);
-			pipe.stencilMode = CompareMode.createByIndex(state.stencilMode);
-			pipe.stencilBothPass = StencilAction.createByIndex(state.stencilBothPass);
-			pipe.stencilDepthFail = StencilAction.createByIndex(state.stencilDepthFail);
-			pipe.stencilFail = StencilAction.createByIndex(state.stencilFail);
-			pipe.stencilReferenceValue = state.stencilReferenceValue;
-			pipe.stencilReadMask = state.stencilReadMask;
-			pipe.stencilWriteMask = state.stencilWriteMask;
-			pipe.blendSource = BlendingFactor.createByIndex(state.blendSource);
-			pipe.blendDestination = BlendingFactor.createByIndex(state.blendDestination);
-			pipe.alphaBlendSource = BlendingFactor.createByIndex(state.alphaBlendSource);
-			pipe.alphaBlendDestination = BlendingFactor.createByIndex(state.alphaBlendDestination);
-			pipe.colorWriteMaskRed = state.colorWriteMaskRed;
-			pipe.colorWriteMaskGreen = state.colorWriteMaskGreen;
-			pipe.colorWriteMaskBlue = state.colorWriteMaskBlue;
-			pipe.colorWriteMaskAlpha = state.colorWriteMaskAlpha;
-			pipe.conservativeRasterization = state.conservativeRasterization;
-			pipe.compile();
+			pipe.state.cullMode = CullMode.createByIndex(state.cullMode);
+			pipe.state.depthWrite = state.depthWrite;
+			pipe.state.depthMode = CompareMode.createByIndex(state.depthMode);
+			pipe.state.stencilMode = CompareMode.createByIndex(state.stencilMode);
+			pipe.state.stencilBothPass = StencilAction.createByIndex(state.stencilBothPass);
+			pipe.state.stencilDepthFail = StencilAction.createByIndex(state.stencilDepthFail);
+			pipe.state.stencilFail = StencilAction.createByIndex(state.stencilFail);
+			pipe.state.stencilReferenceValue = state.stencilReferenceValue;
+			pipe.state.stencilReadMask = state.stencilReadMask;
+			pipe.state.stencilWriteMask = state.stencilWriteMask;
+			pipe.state.blendSource = BlendingFactor.createByIndex(state.blendSource);
+			pipe.state.blendDestination = BlendingFactor.createByIndex(state.blendDestination);
+			pipe.state.alphaBlendSource = BlendingFactor.createByIndex(state.alphaBlendSource);
+			pipe.state.alphaBlendDestination = BlendingFactor.createByIndex(state.alphaBlendDestination);
+			pipe.state.colorWriteMaskRed = state.colorWriteMaskRed;
+			pipe.state.colorWriteMaskGreen = state.colorWriteMaskGreen;
+			pipe.state.colorWriteMaskBlue = state.colorWriteMaskBlue;
+			pipe.state.colorWriteMaskAlpha = state.colorWriteMaskAlpha;
+			pipe.state.conservativeRasterization = state.conservativeRasterization;
+			pipe.state.compile();
 			pipelines[data.id] = pipe;
 		case 'createIndexBuffer':
 			indexBuffers[data.id] = new IndexBuffer(data.size, kha.graphics4.Usage.createByIndex(data.usage));
