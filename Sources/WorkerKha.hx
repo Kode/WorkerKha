@@ -303,6 +303,12 @@ class WorkerKha {
 						g.setInt(constantLocations[command.location], command.value);
 					case 'setBool':
 						g.setBool(constantLocations[command.location], command.value);
+					case 'viewport':
+						g.viewport(command.x, command.y, command.width, command.height);
+					case 'scissor':
+						g.scissor(command.x, command.y, command.width, command.height);
+					case 'disableScissor':
+						g.disableScissor();
 					case 'drawIndexedVertices':
 						g.drawIndexedVertices(command.start, command.count);
 					case 'end':
@@ -458,7 +464,8 @@ class WorkerKha {
 			renderTargets[data.id] = Image.createRenderTarget(data.width, data.height);
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
 			'createConstantLocation', 'createTextureUnit', 'setTexture', 'unlockImage', 'setTextureParameters',
-			'setMatrix3', 'setMatrix4', 'setVector2', 'setVector3', 'setVector4', 'setFloats', 'setFloat', 'setFloat2', 'setFloat3', 'setFloat4', 'setInt', 'setBool':
+			'setMatrix3', 'setMatrix4', 'setVector2', 'setVector3', 'setVector4', 'setFloats', 'setFloat', 'setFloat2', 'setFloat3', 'setFloat4', 'setInt', 'setBool',
+			'viewport', 'scissor', 'disableScissor':
 			currentFrame.commands.push(data);
 		case 'beginFrame':
 
