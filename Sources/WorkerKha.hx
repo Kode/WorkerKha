@@ -260,6 +260,12 @@ class WorkerKha {
 						g.setIndexBuffer(indexBuffers[command.id]);
 					case 'setVertexBuffer':
 						g.setVertexBuffer(vertexBuffers[command.id]);
+					case 'setVertexBuffers':
+						var buffers = new Array<VertexBuffer>();
+						for (i in 0...command.ids.length) {
+							buffers.push(vertexBuffers[command.ids[i]]);
+						}
+						g.setVertexBuffers(buffers);
 					case 'createConstantLocation':
 						constantLocations[command.id] = pipelines[command.pipeline].getConstantLocation(command.name);
 					case 'createTextureUnit':
@@ -311,6 +317,8 @@ class WorkerKha {
 						g.disableScissor();
 					case 'drawIndexedVertices':
 						g.drawIndexedVertices(command.start, command.count);
+					case 'drawIndexedVerticesInstanced':
+						g.drawIndexedVerticesInstanced(command.instanceCount, command.start, command.count);
 					case 'end':
 						g.end();
 					}
@@ -465,7 +473,7 @@ class WorkerKha {
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
 			'createConstantLocation', 'createTextureUnit', 'setTexture', 'unlockImage', 'setTextureParameters',
 			'setMatrix3', 'setMatrix4', 'setVector2', 'setVector3', 'setVector4', 'setFloats', 'setFloat', 'setFloat2', 'setFloat3', 'setFloat4', 'setInt', 'setBool',
-			'viewport', 'scissor', 'disableScissor':
+			'viewport', 'scissor', 'disableScissor', 'setVertexBuffers', 'drawIndexedVerticesInstanced':
 			currentFrame.commands.push(data);
 		case 'beginFrame':
 
