@@ -63,7 +63,7 @@ class WorkerKha {
 	var renderTargets: Map<Int, Image>;
 	var sounds: Map<Int, Sound>;
 	var workerDir: String;
-	var parser: Parser;
+	//var parser: Parser;
 	var width: Int;
 	var height: Int;
 
@@ -107,8 +107,8 @@ class WorkerKha {
 
 	public function load(workerPath: String): Void {
 		loadText(workerPath, function (source: String) {
-			parser = new Parser();
-			parser.parse(source, null);
+			//parser = new Parser();
+			//parser.parse(source, null);
 
 			if (worker != null) {
 				worker.terminate();
@@ -158,7 +158,7 @@ class WorkerKha {
 
 	public function inject(workerPath: String): Void {
 		loadText(workerPath, function (source: String) {
-			parser.parse(source, worker);
+			//parser.parse(source, worker);
 		});
 	}
 
