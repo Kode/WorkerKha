@@ -1,5 +1,8 @@
 package;
 
+import kha.graphics4.DepthStencilFormat;
+import kha.graphics4.TextureFormat;
+import js.Browser;
 import js.html.Worker;
 import kha.Assets;
 import kha.audio1.Audio;
@@ -7,17 +10,9 @@ import kha.Blob;
 import kha.Color;
 import kha.Framebuffer;
 import kha.Image;
-import kha.graphics4.BlendingFactor;
-import kha.graphics4.CompareMode;
 import kha.graphics4.ConstantLocation;
-import kha.graphics4.CullMode;
 import kha.graphics4.FragmentShader;
 import kha.graphics4.IndexBuffer;
-import kha.graphics4.MipMapFilter;
-import kha.graphics4.PipelineState;
-import kha.graphics4.StencilAction;
-import kha.graphics4.TextureAddressing;
-import kha.graphics4.TextureFilter;
 import kha.graphics4.TextureUnit;
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.VertexElement;
@@ -66,6 +61,7 @@ class WorkerKha {
 	//var parser: Parser;
 	var width: Int;
 	var height: Int;
+	var renderTarget: Image;
 
 	public function new() {
 		instance = this;
@@ -86,6 +82,7 @@ class WorkerKha {
 		Keyboard.get().notify(keyDown, keyUp, keyPress);
 		Mouse.get().notify(mouseDown, mouseUp, mouseMove, mouseWheel);
 		worker = null;
+		renderTarget = Image.createRenderTarget(Browser.window.screen.width, Browser.window.screen.height, TextureFormat.RGBA32, DepthStencilFormat.DepthAutoStencilAuto);
 	}
 
 	function loadText(path: String, callback: String->Void): Void {
@@ -222,19 +219,21 @@ class WorkerKha {
 			}
 		}
 		if (frames.length > 0) {
-			var g = framebuffer.g4;
+			var g = renderTarget.g4;
 			for (frame in frames) {
 				var commands = frame.commands;
 				for (command in commands) {
 					switch (command.command) {
 					case 'begin':
 						if (command.renderTarget < 0) {
-							g = framebuffer.g4;
+							g = renderTarget.g4;
+							g.begin();
+							g.viewport(0, 0, width, height);
 						}
 						else {
 							g = renderTargets[command.renderTarget].g4;
+							g.begin();
 						}
-						g.begin();
 					case 'clear':
 						g.clear(command.color == null ? null : Color.fromValue(command.color), command.hasDepth ? command.depth : null, command.hasStencil ? command.stencil : null);
 					case 'setPipeline':
@@ -329,6 +328,15 @@ class WorkerKha {
 		if (worker != null) {
 			worker.postMessage( { command: 'frame' } );
 		}
+		framebuffer.g2.begin();
+		framebuffer.g2.clear(Color.Black);
+		if (framebuffer.g4.renderTargetsInvertedY()) {
+			framebuffer.g2.drawScaledSubImage(renderTarget, 0, height, width, -height, 0, 0, width, height);
+		}
+		else {
+			framebuffer.g2.drawImage(renderTarget, 0, 0);
+		}
+		framebuffer.g2.end();
 	}
 	
 	function keyDown(key: KeyCode): Void {
