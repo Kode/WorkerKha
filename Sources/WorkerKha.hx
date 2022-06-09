@@ -1,5 +1,6 @@
 package;
 
+import js.lib.ArrayBuffer;
 import kha.graphics4.DepthStencilFormat;
 import kha.graphics4.TextureFormat;
 import js.Browser;
@@ -210,7 +211,8 @@ class WorkerKha {
 		});
 	}
 	
-	public function render(framebuffer: Framebuffer): Void {
+	public function render(framebuffers: Array<Framebuffer>): Void {
+		var framebuffer = framebuffers[0];
 		if (System.windowWidth() != width || System.windowHeight() != height) {
 			width = System.windowWidth();
 			height = System.windowHeight();
@@ -240,20 +242,20 @@ class WorkerKha {
 						g.setPipeline(pipelines[command.id].state);
 					case 'updateIndexBuffer':
 						var indexBuffer = indexBuffers[command.id];
-						var data = indexBuffer.lock();
-						data.data().set(command.data);
+						var data: ArrayBuffer = indexBuffer.lock().buffer;
+						new js.lib.Uint8Array(data).set(new js.lib.Uint8Array(command.data.buffer));
 						indexBuffer.unlock();
 					case 'updateVertexBuffer':
 						var vertexBuffer = vertexBuffers[command.id];
 						var start: Int = command.start;
 						var count: Int = command.count;
-						var data = vertexBuffer.lock(start, count);
-						data.data().set(command.data);
+						var data: ArrayBuffer = vertexBuffer.lock(start, count).buffer;
+						new js.lib.Uint8Array(data).set(new js.lib.Uint8Array(command.data.buffer));
 						vertexBuffer.unlock();
 					case 'unlockImage':
 						var image = images[command.id];
 						var bytes = image.lock();
-						new js.html.Uint8Array(bytes.getData()).set(new js.html.Uint8Array(command.bytes));
+						new js.lib.Uint8Array(bytes.getData()).set(new js.lib.Uint8Array(command.bytes));
 						image.unlock();
 					case 'setIndexBuffer':
 						g.setIndexBuffer(indexBuffers[command.id]);
@@ -280,8 +282,8 @@ class WorkerKha {
 							g.setTexture(textureUnits[command.stage], images[command.texture]);
 						}
 					case 'setTextureParameters':
-						g.setTextureParameters(textureUnits[command.id], TextureAddressing.createByIndex(command.uAddressing), TextureAddressing.createByIndex(command.vAddressing),
-							TextureFilter.createByIndex(command.minificationFilter), TextureFilter.createByIndex(command.magnificationFilter), MipMapFilter.createByIndex(command.mipmapFilter));
+						g.setTextureParameters(textureUnits[command.id], command.uAddressing, command.vAddressing,
+							command.minificationFilter, command.magnificationFilter, command.mipmapFilter);
 					case 'setMatrix3':
 						g.setMatrix3(constantLocations[command.location], new FastMatrix3(command._00, command._10, command._20, command._01, command._11, command._21, command._02, command._12, command._22));
 					case 'setMatrix4':
@@ -330,7 +332,7 @@ class WorkerKha {
 		}
 		framebuffer.g2.begin();
 		framebuffer.g2.clear(Color.Black);
-		if (framebuffer.g4.renderTargetsInvertedY()) {
+		if (Image.renderTargetsInvertedY()) {
 			framebuffer.g2.drawScaledSubImage(renderTarget, 0, height, width, -height, 0, 0, width, height);
 		}
 		else {
@@ -437,26 +439,30 @@ class WorkerKha {
 				var newstructure = new VertexStructure();
 				var elements: Array<Dynamic> = structure.elements;
 				for (element in elements) {
-					var newelement = new VertexElement(element.name, VertexData.createByIndex(element.data));
+					var newelement = new VertexElement(element.name, element.data);
 					newstructure.elements.push(newelement);
 				}
 				pipe.state.inputLayout.push(newstructure);
 			}
 			var state = data.state;
-			pipe.state.cullMode = CullMode.createByIndex(state.cullMode);
+			pipe.state.cullMode = state.cullMode;
 			pipe.state.depthWrite = state.depthWrite;
-			pipe.state.depthMode = CompareMode.createByIndex(state.depthMode);
-			pipe.state.stencilMode = CompareMode.createByIndex(state.stencilMode);
-			pipe.state.stencilBothPass = StencilAction.createByIndex(state.stencilBothPass);
-			pipe.state.stencilDepthFail = StencilAction.createByIndex(state.stencilDepthFail);
-			pipe.state.stencilFail = StencilAction.createByIndex(state.stencilFail);
+			pipe.state.depthMode = state.depthMode;
+			pipe.state.stencilFrontMode = state.stencilFrontMode;
+			pipe.state.stencilFrontBothPass = state.stencilFrontBothPass;
+			pipe.state.stencilFrontDepthFail = state.stencilFrontDepthFail;
+			pipe.state.stencilFrontFail = state.stencilFrontFail;
+			pipe.state.stencilBackMode = state.stencilBackMode;
+			pipe.state.stencilBackBothPass = state.stencilBackBothPass;
+			pipe.state.stencilBackDepthFail = state.stencilBackDepthFail;
+			pipe.state.stencilBackFail = state.stencilBackFail;
 			pipe.state.stencilReferenceValue = state.stencilReferenceValue;
 			pipe.state.stencilReadMask = state.stencilReadMask;
 			pipe.state.stencilWriteMask = state.stencilWriteMask;
-			pipe.state.blendSource = BlendingFactor.createByIndex(state.blendSource);
-			pipe.state.blendDestination = BlendingFactor.createByIndex(state.blendDestination);
-			pipe.state.alphaBlendSource = BlendingFactor.createByIndex(state.alphaBlendSource);
-			pipe.state.alphaBlendDestination = BlendingFactor.createByIndex(state.alphaBlendDestination);
+			pipe.state.blendSource = state.blendSource;
+			pipe.state.blendDestination = state.blendDestination;
+			pipe.state.alphaBlendSource = state.alphaBlendSource;
+			pipe.state.alphaBlendDestination = state.alphaBlendDestination;
 			pipe.state.colorWriteMaskRed = state.colorWriteMaskRed;
 			pipe.state.colorWriteMaskGreen = state.colorWriteMaskGreen;
 			pipe.state.colorWriteMaskBlue = state.colorWriteMaskBlue;
@@ -465,17 +471,17 @@ class WorkerKha {
 			pipe.state.compile();
 			pipelines[data.id] = pipe;
 		case 'createIndexBuffer':
-			indexBuffers[data.id] = new IndexBuffer(data.size, kha.graphics4.Usage.createByIndex(data.usage));
+			indexBuffers[data.id] = new IndexBuffer(data.size, data.usage);
 		case 'createVertexBuffer':
 			var structure = new VertexStructure();
 			var elements: Array<Dynamic> = data.structure.elements;
 			for (element in elements) {
-				var newelement = new VertexElement(element.name, VertexData.createByIndex(element.data));
+				var newelement = new VertexElement(element.name, element.data);
 				structure.elements.push(newelement);
 			}
-			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, kha.graphics4.Usage.createByIndex(data.usage));
+			vertexBuffers[data.id] = new VertexBuffer(data.size, structure, data.usage);
 		case 'createImage':
-			images[data.id] = Image.create(data.width, data.height, kha.graphics4.TextureFormat.createByIndex(data.format), kha.graphics4.Usage.createByIndex(data.usage));
+			images[data.id] = Image.create(data.width, data.height, data.format, data.usage);
 		case 'createRenderTarget':
 			renderTargets[data.id] = Image.createRenderTarget(data.width, data.height);
 		case 'begin', 'clear', 'end', 'setPipeline', 'updateIndexBuffer', 'updateVertexBuffer', 'setIndexBuffer', 'setVertexBuffer', 'drawIndexedVertices',
