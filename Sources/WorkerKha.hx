@@ -87,20 +87,11 @@ class WorkerKha {
 	}
 
 	function loadText(path: String, callback: String->Void): Void {
-		var request = untyped new js.html.XMLHttpRequest();
-		request.open("GET", path, true);
-		request.responseType = "text";
-		
-		request.onreadystatechange = function() {
-			if (request.readyState != 4) return;
-			if (request.status >= 200 && request.status < 400) {
-				callback(request.response);
-			}
-			else {
-				trace("Error loading " + path);
-			}
-		};
-		request.send(null);
+		Assets.loadBlobFromPath(path, (blob) -> {
+			callback(blob.toString());
+		}, (error) -> {
+			trace("Error loading " + path);
+		});
 	}
 
 	public function load(workerPath: String): Void {
