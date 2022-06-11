@@ -1,5 +1,6 @@
 package;
 
+import kha.graphics4.StencilValue;
 import js.lib.ArrayBuffer;
 import kha.graphics4.DepthStencilFormat;
 import kha.graphics4.TextureFormat;
@@ -234,14 +235,14 @@ class WorkerKha {
 					case 'updateIndexBuffer':
 						var indexBuffer = indexBuffers[command.id];
 						var data: ArrayBuffer = indexBuffer.lock().buffer;
-						new js.lib.Uint8Array(data).set(new js.lib.Uint8Array(command.data.buffer));
+						new js.lib.Uint8Array(data).set(new js.lib.Uint8Array(command.data));
 						indexBuffer.unlock();
 					case 'updateVertexBuffer':
 						var vertexBuffer = vertexBuffers[command.id];
 						var start: Int = command.start;
 						var count: Int = command.count;
 						var data: ArrayBuffer = vertexBuffer.lock(start, count).buffer;
-						new js.lib.Uint8Array(data).set(new js.lib.Uint8Array(command.data.buffer));
+						new js.lib.Uint8Array(data).set(new js.lib.Uint8Array(command.data));
 						vertexBuffer.unlock();
 					case 'unlockImage':
 						var image = images[command.id];
@@ -447,7 +448,7 @@ class WorkerKha {
 			pipe.state.stencilBackBothPass = state.stencilBackBothPass;
 			pipe.state.stencilBackDepthFail = state.stencilBackDepthFail;
 			pipe.state.stencilBackFail = state.stencilBackFail;
-			pipe.state.stencilReferenceValue = state.stencilReferenceValue;
+			pipe.state.stencilReferenceValue = state.stencilReferenceValue == -1 ? StencilValue.Dynamic : StencilValue.Static(state.stencilReferenceValue);
 			pipe.state.stencilReadMask = state.stencilReadMask;
 			pipe.state.stencilWriteMask = state.stencilWriteMask;
 			pipe.state.blendSource = state.blendSource;
